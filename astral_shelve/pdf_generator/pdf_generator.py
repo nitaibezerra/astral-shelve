@@ -5,6 +5,8 @@ from reportlab.lib.units import inch
 from reportlab.platypus import HRFlowable, Paragraph, SimpleDocTemplate, Spacer, Flowable
 from typing import List
 
+from astral_shelve.pdf_generator.repetition_bar_allocator import LevelAllocator
+
 
 @dataclass
 class Hymn:
@@ -15,6 +17,7 @@ class Hymn:
     title: str
     text: str
     style: str
+    repetitions: str
 
 
 class VerticalLine(Flowable):
@@ -97,6 +100,36 @@ class HymnPDFGenerator:
         elements = self._build_elements()
         doc.build(elements)
 
+
+    def add_vertical_lines(self, elements):
+        allocator = LevelAllocator()
+        line_positions = allocator.get_entries_with_levels(self.hymn.repetitions)
+
+        base_y_start = -12
+        one_line_hight = 7
+        space_between_lines = 9
+        levels_distance = 6
+
+        for line in line_positions:
+            start_line = line['start'] - 1
+            end_line = line['end'] - 1
+            level = line['level']
+
+            y_start = (
+                base_y_start
+                - (start_line * one_line_hight
+                   + start_line * space_between_lines)
+            )
+            y_end = (
+                base_y_start
+                - (end_line * one_line_hight
+                   + end_line * space_between_lines + one_line_hight)
+            )
+
+            elements.append(
+                VerticalLine(-(level * levels_distance), y_start, y_end))
+
+
     def _build_elements(self) -> List[Paragraph]:
         """
         Build the PDF elements from the hymn content.
@@ -117,22 +150,22 @@ class HymnPDFGenerator:
 
         paragraphs = self.hymn.text.strip().split("\n\n")
 
+        # Add vertical lines
+        self.add_vertical_lines(elements)
+
         # Add body paragraphs
         for paragraph in paragraphs:
-            y_start = -12
-            y_end = y_start - 23
-            elements.append(VerticalLine(-7, y_start, y_end))
-
             elements.append(Paragraph(paragraph.replace("\n", "<br/>"), self.body_style))
 
         return elements
 
 
-# Input hymn data
-hymn = Hymn(
-    number=2,
-    title="ESTOU AQUI",
-    text="""Eu estou aqui
+if __name__ == "__main__":
+    # Input hymn data
+    hymn = Hymn(
+        number=2,
+        title="ESTOU AQUI",
+        text="""Eu estou aqui
 Que o Mestre me mandou
 Eu vou citar o nome
 O Mestre é Juramidam
@@ -161,12 +194,13 @@ Minha senhora mãe
 Senhora da Conceição
 Guiai-me neste mundo
 Livrai-me da tentação""",
-    style="Marcha"
-)
+        style="Marcha",
+        repetitions="1-2,3-4",
+    )
 
-# Output filename
-output_filename = "output.pdf"
+    # Output filename
+    output_filename = "example-estou-aqui.pdf"
 
-# Create the PDF
-generator = HymnPDFGenerator(hymn, output_filename)
-generator.create_pdf()
+    # Create the PDF
+    generator = HymnPDFGenerator(hymn, output_filename)
+    generator.create_pdf()

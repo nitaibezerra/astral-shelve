@@ -106,16 +106,3 @@ class LevelAllocator:
             })
 
         return result
-
-# Example usage
-s = "1-2,3-4,1-4,2-3,3-5"
-allocator = LevelAllocator()
-levels = allocator.allocate_levels(s)
-print(levels)  # Output: [1, 1, 2, 3, 4]
-
-allocator = LevelAllocator()
-entries_with_levels = allocator.get_entries_with_levels(s)
-print(entries_with_levels)
-# Output: [{'start': 1, 'end': 2, 'level': 1}, {'start': 3, 'end': 4, 'level': 1},
-#          {'start': 1, 'end': 4, 'level': 2}, {'start': 2, 'end': 3, 'level': 3},
-#          {'start': 3, 'end': 5, 'level': 4}]
